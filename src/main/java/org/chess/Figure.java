@@ -48,7 +48,6 @@ public class Figure {
             if (Arrays.equals(userMoveIndex, pos)){
                 board[pos[0]][pos[1]]=this;
                 board[index[0]][index[1]]=null;
-                this.hasMoved = PieceState.MOVED;
                 return board;
             }
         }
@@ -68,7 +67,7 @@ class Pawn extends Figure{
         int direction = Objects.equals(this.color, Color.WHITE) ? 1 : -1;
         int[] index = this.getIndex();
         int steps = ((index[0]==1&&Objects.equals(this.color, Color.WHITE))||(index[0]==6&& Objects.equals(this.color, Color.BLACK))) ? 2:1;
-        int[][] possibleCapture = new int[][]{{direction, -1},{direction,1},{0,-1},{0,1}};
+        int[][] possibleCapture = new int[][]{{direction,-1},{direction,1},{0,-1},{0,1}};
         ArrayList<int[]> posMoves = new ArrayList<>();
         for (int[] posCap:possibleCapture){
             int nextRow = index[0]+posCap[0];
@@ -186,10 +185,10 @@ class King extends Figure{
     @Override
     public ArrayList<int[]>  pieceMoves(Figure[][] board){
         int[] index = this.getIndex();
-        int[][] kingMovesDirection = new int[][]{{1,0},{0,-1},{-1,0},{0,1},{1,1},{1,-1},{-1,1},{-1,-1}};
         ArrayList<int[]> posMoves = new ArrayList<>();
         String startPos = (this.color==Color.WHITE) ? "e1":"e8";
         boolean kingNotMoved = (Objects.equals(this.position, startPos));
+        this.getKingMoves(board,posMoves);
         if (kingNotMoved){
             if (canCastle(board,index[0],index[1],7)){
                 posMoves.add(new int[]{index[0],index[1]+2});
@@ -198,6 +197,11 @@ class King extends Figure{
                 posMoves.add(new int[]{index[0],index[1]-2});
             }
         }
+        return posMoves;
+    }
+    public void getKingMoves(Figure[][] board,ArrayList<int[]> posMoves){
+        int[] index = this.getIndex();
+        int[][] kingMovesDirection = new int[][]{{1,0},{0,-1},{-1,0},{0,1},{1,1},{1,-1},{-1,1},{-1,-1}};
         for (int[] dir:kingMovesDirection){
             int nextRow = index[0]+dir[0];
             int nextCol = index[1]+dir[1];
@@ -208,7 +212,6 @@ class King extends Figure{
                 posMoves.add(new int[]{nextRow, nextCol});
             }
         }
-        return posMoves;
     }
     private boolean canCastle(Figure[][] board, int row, int kingCol, int rookCol) {
         Figure rook = board[row][rookCol];

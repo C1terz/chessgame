@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class ActiveGame {
     private Figure[][] gameState = new Figure[8][8];
-    private String gameHistory;
+    private String gameHistory = "";
     private boolean isGameActive = true;
     private Player white;
     private Player black;
@@ -77,8 +77,19 @@ public class ActiveGame {
             board[posFromIndex[0]][posFromIndex[1]] = pieceToMove;
             board[posToIndex[0]][posToIndex[1]] = onBoardFigure;
             pieceToMove.position = posFrom;
+            if (onBoardFigure!=null) {
+                onBoardFigure.position = posTo;
+            }
             return;
         }
+        for (Figure[] row:board){
+            for (Figure piece:row){
+                if (piece!=null&&piece.type==Pieces.PAWN&&piece.color==plr.color&&piece.hasMoved==PieceState.ENPASSANT){
+                    piece.hasMoved=PieceState.MOVED;
+                }
+            }
+        }
+        pieceToMove.hasMoved = PieceState.MOVED;
         if (pieceToMove.type==Pieces.KING&&Math.abs(posFromIndex[0]-posToIndex[0])>1){
             int row = posFromIndex[0];
             boolean isKingside = posToIndex[1] > posFromIndex[1];
@@ -103,7 +114,7 @@ public class ActiveGame {
 
         this.gameState = board;
         if ((pieceToMove.type==Pieces.PAWN)&&(posToIndex[0]==0||posToIndex[0]==7)){
-            onBoardFigure.Promote(board,plr.promoteTo);
+            pieceToMove.Promote(board,plr.promoteTo);
         }
         board[posToIndex[0]][posToIndex[1]].position=posTo;
         plr.isPlayerTurn=false;
@@ -187,7 +198,9 @@ public class ActiveGame {
                             }
                             pieceMoves.add(new int[]{nextRow, nextCol});
                         }
-                    }else{
+                    } else if (piece.type==Pieces.KING&& piece instanceof King king) {
+                        king.getKingMoves(board,pieceMoves);
+                    } else{
                         pieceMoves = piece.pieceMoves(board);
                     }
                     boardMoves.addAll(pieceMoves);
