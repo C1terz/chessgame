@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class Figure {
+public abstract class Figure {
     public String position;
     public Color color;
     public int advantageValue;
@@ -13,9 +13,7 @@ public class Figure {
     public int[] getIndex(){
         return Board.transformIndex(position);
     }
-    public ArrayList<int[]>  pieceMoves(Figure[][] board){
-        return new ArrayList<>();
-    }
+    public abstract ArrayList<int[]>  pieceMoves(Figure[][] board);
     public void Promote(Figure[][] board, Pieces promoteTo){
     }
     public ArrayList<int[]> slidingPieceMoves(Figure[][] board,int[][]directions){
