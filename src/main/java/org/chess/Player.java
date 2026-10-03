@@ -7,8 +7,15 @@ public class Player {
     public Color color;
     public Pieces promoteTo=Pieces.QUEEN;
     public boolean isPlayerTurn = false;
+    private Figure king;
     public Player(Color color){
         this.color= color;
+    }
+    public void setKing(Figure king){
+        this.king = king;
+    }
+    public Figure getKing(){
+        return this.king;
     }
 
 }

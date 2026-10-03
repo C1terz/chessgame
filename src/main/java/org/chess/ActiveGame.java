@@ -1,7 +1,6 @@
 package org.chess;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class ActiveGame {
@@ -35,10 +34,11 @@ public class ActiveGame {
                     }
                     if (col==4){
                         f = new King(color);
+                        Player selPlayer = (row<2)?this.white:this.black;
+                        selPlayer.setKing(f);
                     }
                 }
-                if (f!=null)f.position = Board.transformIndex(new int[]{row,col});
-                this.gameState[row][col]=f;
+                if (f!=null)f.setPosition(this.gameState,new int[]{row,col});
             }
         }
     }
@@ -68,63 +68,69 @@ public class ActiveGame {
         Figure onBoardFigure = this.gameState[posToIndex[0]][posToIndex[1]];
         Figure pieceToMove = this.gameState[posFromIndex[0]][posFromIndex[1]];
         if (!Objects.equals(pieceToMove.color, plr.color)) return;
-        Figure[][] board = this.gameState[posFromIndex[0]][posFromIndex[1]].Move(this.gameState,posTo);
+        Figure[][] board = this.gameState[posFromIndex[0]][posFromIndex[1]].move(this.gameState,posTo);
         if (board[posFromIndex[0]][posFromIndex[1]]!=null) return;
-        Figure king = getKing(board,plr.color);
+        Figure king = plr.getKing();
+        Figure enPassantPawn = null;
+        int[] enPassantPos = null;
+        if (pieceToMove.type == Pieces.PAWN && posFromIndex[1] != posToIndex[1] && onBoardFigure == null) {
+            enPassantPos = new int[]{posFromIndex[0], posToIndex[1]};
+            enPassantPawn = board[enPassantPos[0]][enPassantPos[1]];
+            board[enPassantPos[0]][enPassantPos[1]] = null;
+        }
         assert king != null;
         boolean checked = this.isKingChecked(king,board);
         if (checked) {
-            board[posFromIndex[0]][posFromIndex[1]] = pieceToMove;
-            board[posToIndex[0]][posToIndex[1]] = onBoardFigure;
-            pieceToMove.position = posFrom;
-            if (onBoardFigure!=null) {
-                onBoardFigure.position = posTo;
+            pieceToMove.setPosition(board,posFromIndex);
+            if (enPassantPawn!=null) {
+                enPassantPawn.setPosition(board,enPassantPos);
             }
+            if (onBoardFigure!=null) onBoardFigure.setPosition(board,posToIndex);
             return;
         }
+        Player opponent = Objects.equals(plr.color, Color.WHITE) ? this.black : this.white;
         for (Figure[] row:board){
             for (Figure piece:row){
-                if (piece!=null&&piece.type==Pieces.PAWN&&piece.color==plr.color&&piece.hasMoved==PieceState.ENPASSANT){
+                if (piece!=null&&piece.type==Pieces.PAWN&&piece.color==opponent.color&&piece.hasMoved==PieceState.ENPASSANT){
                     piece.hasMoved=PieceState.MOVED;
                 }
             }
         }
         pieceToMove.hasMoved = PieceState.MOVED;
-        if (pieceToMove.type==Pieces.KING&&Math.abs(posFromIndex[0]-posToIndex[0])>1){
+        if (pieceToMove.type==Pieces.KING&&Math.abs(posFromIndex[1]-posToIndex[1])>1){
             int row = posFromIndex[0];
             boolean isKingside = posToIndex[1] > posFromIndex[1];
             int oldRookCol = isKingside ? 7 : 0;
             int newRookCol = isKingside ? posToIndex[1] - 1 : posToIndex[1] + 1;
             Figure rook = board[row][oldRookCol];
             if (rook != null) {
-                board[row][newRookCol] = rook;
-                board[row][oldRookCol] = null;
-                rook.position = Board.transformIndex(new int[]{row, newRookCol});
+
+                rook.setPosition(board,new int[]{row, newRookCol});
                 rook.hasMoved = PieceState.MOVED;
             }
         } else if (pieceToMove.type==Pieces.PAWN) {
             //EN PASSANT LOGIC
-            if (Math.abs(posFromIndex[1]-posToIndex[1])>1) {
+            if (Math.abs(posFromIndex[0]-posToIndex[0])>1) {
                 pieceToMove.hasMoved = PieceState.ENPASSANT;
-            } else if (posFromIndex[0]!=0&&board[posToIndex[0]][posToIndex[1]]==null&&board[posToIndex[0]][posFromIndex[1]].type==Pieces.PAWN) {
-                plr.advantage.add(board[posToIndex[0]][posFromIndex[1]]);
-                board[posToIndex[0]][posFromIndex[1]]=null;
             }
+
         }
 
         this.gameState = board;
         if ((pieceToMove.type==Pieces.PAWN)&&(posToIndex[0]==0||posToIndex[0]==7)){
-            pieceToMove.Promote(board,plr.promoteTo);
+            pieceToMove.promote(board,plr.promoteTo);
         }
-        board[posToIndex[0]][posToIndex[1]].position=posTo;
+        board[posToIndex[0]][posToIndex[1]].setPosition(board,Board.transformIndex(posTo));
         plr.isPlayerTurn=false;
-        Player opponent = Objects.equals(plr.color, Color.WHITE) ? this.black : this.white;
         opponent.isPlayerTurn = true;
+        if (enPassantPawn != null) {
+            plr.advantage.add(enPassantPawn);
+        }
         if (onBoardFigure != null){
             plr.advantage.add(onBoardFigure);
         }
         if (!playerHasLegalMoves(opponent,this.gameState)){
-            if (isKingChecked(Objects.requireNonNull(getKing(this.gameState, opponent.color)),this.gameState)){
+            if (isKingChecked(Objects.requireNonNull(opponent.getKing()),this.gameState)){
                 this.endGame(opponent.color,"checkmate");
             }
             else{
@@ -134,33 +140,23 @@ public class ActiveGame {
         this.gameHistory += (posFrom+" "+posTo+" ");
     }
     public boolean isKingChecked(Figure king,Figure[][] board){
-      Color enemycolor = Objects.equals(king.color, Color.WHITE) ? Color.BLACK:Color.WHITE;
-      ArrayList<int[]> enemyMoves = ActiveGame.getBoardMoves(board,enemycolor);
-      for (int[] move:enemyMoves){
-          if (Arrays.equals(Board.transformIndex(king.position), move)){
-              return true;
-          }
-      }
-      return false;
+      return  king.raycastThreats(board,king.getPosition());
     }
     public boolean playerHasLegalMoves(Player plr, Figure[][] board){
-        Figure king = getKing(board, plr.color);
+        Figure king = plr.getKing();
         assert king != null;
 
         for (Figure[] row:board) {
             for (Figure fig : row) {
                 if (fig != null && Objects.equals(fig.color, plr.color)) {
                     ArrayList<int[]> posMoves = fig.pieceMoves(board);
-                    int[] figPos = Board.transformIndex(fig.position);
+                    int[] figPos = fig.getPosition();
                     for (int[] move : posMoves) {
-                        board[figPos[0]][figPos[1]] = null;
                         Figure prevFig = board[move[0]][move[1]];
-                        board[move[0]][move[1]] = fig;
-                        fig.position = Board.transformIndex(move);
+                        fig.setPosition(board,move);
                         boolean inCheck = isKingChecked(king, board);
+                        fig.setPosition(board,figPos);
                         board[move[0]][move[1]]=prevFig;
-                        board[figPos[0]][figPos[1]]=fig;
-                        fig.position = Board.transformIndex(figPos);
                         if (!inCheck) {
                             return true;
                         }
@@ -169,45 +165,6 @@ public class ActiveGame {
             }
         }
         return false;
-    }
-    public static Figure getKing(Figure[][]board,Color color){
-        for (Figure[] row:board){
-            for (Figure fig:row){
-                if (fig!=null&& Objects.equals(fig.type, Pieces.KING) && Objects.equals(fig
-                        .color, color))return fig;
-            }
-        }
-        return null;
-    }
-    public static ArrayList<int[]> getBoardMoves(Figure[][]board,Color color){
-        ArrayList<int[]> boardMoves = new ArrayList<>();
-        for (Figure[] row:board){
-            for (Figure piece:row){
-                if (piece!=null&& Objects.equals(piece.color, color)){
-                    ArrayList<int[]> pieceMoves = new ArrayList<>();
-
-                    if (Objects.equals(piece.type,Pieces.PAWN)){
-                        int direction = Objects.equals(color, Color.WHITE) ? 1 : -1;
-                        int[][] possibleCapture = new int[][]{{direction, -1},{direction,1}};
-                        int[] index = piece.getIndex();
-                        for (int[] posCap:possibleCapture){
-                            int nextRow = index[0]+posCap[0];
-                            int nextCol = index[1]+posCap[1];
-                            if (nextRow < 0 || nextRow > 7||nextCol < 0 || nextCol > 7) {
-                                continue;
-                            }
-                            pieceMoves.add(new int[]{nextRow, nextCol});
-                        }
-                    } else if (piece.type==Pieces.KING&& piece instanceof King king) {
-                        king.getKingMoves(board,pieceMoves);
-                    } else{
-                        pieceMoves = piece.pieceMoves(board);
-                    }
-                    boardMoves.addAll(pieceMoves);
-                }
-            }
-        }
-        return boardMoves;
     }
 
 
