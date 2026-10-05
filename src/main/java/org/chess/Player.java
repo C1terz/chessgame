@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Player {
     public ArrayList<Figure> advantage = new ArrayList<>();
-    public Color color;
+    private Color color;
     private PlayerData attachedPlayer;
     public Pieces promoteTo=Pieces.QUEEN;
     public boolean isPlayerTurn = false;
@@ -20,6 +20,12 @@ public class Player {
     }
     public void attachPlayer(PlayerData plr){
         this.attachedPlayer = plr;
+    }
+    public Color getColor(){
+        return this.color;
+    }
+    public void setColor(Color setTo){
+        this.color = setTo;
     }
     public PlayerData getAttachedPlayer(){
         return this.attachedPlayer;

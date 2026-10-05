@@ -58,7 +58,7 @@ public class ActiveGame {
                 System.out.println("STALEMATE");
                 break;
             case "checkmate":
-                System.out.println("WINNER:"+winner.color);
+                System.out.println("WINNER:"+winner.getColor());
                 break;
         }
 
@@ -74,7 +74,7 @@ public class ActiveGame {
         if (this.gameState[posFromIndex[0]][posFromIndex[1]]==null) return;
         Figure onBoardFigure = this.gameState[posToIndex[0]][posToIndex[1]];
         Figure pieceToMove = this.gameState[posFromIndex[0]][posFromIndex[1]];
-        if (!Objects.equals(pieceToMove.color, plr.color)) return;
+        if (!Objects.equals(pieceToMove.color, plr.getColor())) return;
         Figure[][] board = this.gameState[posFromIndex[0]][posFromIndex[1]].move(this.gameState,posTo);
         if (board[posFromIndex[0]][posFromIndex[1]]!=null) return;
         Figure king = plr.getKing();
@@ -95,10 +95,10 @@ public class ActiveGame {
             if (onBoardFigure!=null) onBoardFigure.setPosition(board,posToIndex);
             return;
         }
-        Player opponent = Objects.equals(plr.color, Color.WHITE) ? this.black : this.white;
+        Player opponent = Objects.equals(plr.getColor(), Color.WHITE) ? this.black : this.white;
         for (Figure[] row:board){
             for (Figure piece:row){
-                if (piece!=null&&piece.type==Pieces.PAWN&&piece.color==opponent.color&&piece.hasMoved==PieceState.ENPASSANT){
+                if (piece!=null&&piece.type==Pieces.PAWN&&piece.color==opponent.getColor()&&piece.hasMoved==PieceState.ENPASSANT){
                     piece.hasMoved=PieceState.MOVED;
                 }
             }
@@ -138,10 +138,10 @@ public class ActiveGame {
         }
         if (!playerHasLegalMoves(opponent,this.gameState)){
             if (isKingChecked(Objects.requireNonNull(opponent.getKing()),this.gameState)){
-                this.endGame(opponent.color,"checkmate");
+                this.endGame(opponent.getColor(),"checkmate");
             }
             else{
-                this.endGame(opponent.color,"stalemate");
+                this.endGame(opponent.getColor(),"stalemate");
             }
         }
         this.gameHistory += (posFrom+" "+posTo+" ");
@@ -155,7 +155,7 @@ public class ActiveGame {
 
         for (Figure[] row:board) {
             for (Figure fig : row) {
-                if (fig != null && Objects.equals(fig.color, plr.color)) {
+                if (fig != null && Objects.equals(fig.color, plr.getColor())) {
                     ArrayList<int[]> posMoves = fig.pieceMoves(board);
                     int[] figPos = fig.getPosition();
                     for (int[] move : posMoves) {

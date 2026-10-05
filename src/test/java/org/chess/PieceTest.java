@@ -259,5 +259,7 @@ class PieceTest {
         // Verify the King is no longer in check because the file raycast gets broken by the pawn
         boolean isCheckedBlockedLine = king.raycastThreats(emptyBoard, king.getPosition());
         assertFalse(isCheckedBlockedLine, "King should NOT register a check if a piece blocks the raycast path.");
-    }
+        Board.printBoardState(emptyBoard);
+    };
+
 }

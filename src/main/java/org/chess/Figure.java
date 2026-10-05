@@ -6,9 +6,9 @@ import java.util.Objects;
 
 public abstract class Figure {
     private int[] position;
-    public Color color;
-    public int advantageValue;
-    public PieceState hasMoved = PieceState.IDLE;
+    protected Color color;
+    protected int advantageValue;
+    protected PieceState hasMoved = PieceState.IDLE;
     protected Pieces type;
     public abstract ArrayList<int[]>  pieceMoves(Figure[][] board);
     public void promote(Figure[][] board, Pieces promoteTo){

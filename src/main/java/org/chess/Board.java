@@ -18,4 +18,17 @@ public class Board {
         char ch2 = move.charAt(1);
         return ('h' >= ch1 && ch1 >= 'a') && ('8' >= ch2 && ch2 >= '1');
     }
+    public static void printBoardState(Figure[][] board){
+        for (int i =0;i<8;i++){
+            for (int j = 0;j<8;j++){
+                if (board[i][j]!=null) {
+                    System.out.print(" "+board[i][j].color.toString()+board[i][j].type.toString()+" ");
+                }
+                else{
+                    System.out.print(" NONETYPE ");
+                }
+            }
+            System.out.print("\n");
+        }
+    }
 }
