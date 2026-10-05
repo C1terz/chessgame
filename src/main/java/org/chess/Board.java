@@ -12,4 +12,10 @@ public class Board {
         char row = (char) ('1' + index[0]);
         return "" + col + row;
     }
+    public static boolean validateMove(String move){
+        if (move.length()!=2)return false;
+        char ch1 = move.charAt(0);
+        char ch2 = move.charAt(1);
+        return ('h' >= ch1 && ch1 >= 'a') && ('8' >= ch2 && ch2 >= '1');
+    }
 }

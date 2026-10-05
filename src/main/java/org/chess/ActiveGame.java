@@ -9,10 +9,15 @@ public class ActiveGame {
     private boolean isGameActive = true;
     private Player white;
     private Player black;
-    public void startGame(){
+    public Figure[][] getBoard(){
+        return  this.gameState;
+    }
+    public void startGame(PlayerData plr1, PlayerData plr2){
         this.white = new Player(Color.WHITE);
+        this.white.attachPlayer(plr1);
         this.white.isPlayerTurn = true;
         this.black = new Player(Color.BLACK);
+        this.black.attachPlayer(plr2);
         for (int row=0;row<8;row++){
             for (int col=0;col<8;col++){
                 Figure f = null;
@@ -58,10 +63,12 @@ public class ActiveGame {
         }
 
     }
-    public void playerAct(Player plr, String posFrom, String posTo){
+    public void playerAct(PlayerData plrRequest, String posFrom, String posTo){
+        if (!Board.validateMove(posFrom)||!Board.validateMove(posTo)||(posTo.equals(posFrom))) {
+            System.out.println("Invalid Move."); return;}
+        Player plr = this.white.getAttachedPlayer()==plrRequest?this.white:this.black;
         if (!this.isGameActive) return;
         if (!plr.isPlayerTurn) return;
-        if (Objects.equals(posTo, " 0")) return;
         int[] posFromIndex = Board.transformIndex(posFrom);
         int[] posToIndex = Board.transformIndex(posTo);
         if (this.gameState[posFromIndex[0]][posFromIndex[1]]==null) return;
